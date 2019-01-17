@@ -1,43 +1,98 @@
 # KambaCheckout
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/kamba_checkout`. To experiment with that code, run `bin/console` for an interactive prompt.
+Gem ruby para configurar o checkout nos serviços da Kamba.
+## Instalação
 
-TODO: Delete this and the text above, and describe your gem
-
-## Installation
-
-Add this line to your application's Gemfile:
+Adicione essa linha ao Gemfile da sua applicação:
 
 ```ruby
 gem 'kamba_checkout'
 ```
 
-And then execute:
+E execute:
 
     $ bundle
 
-Or install it yourself as:
+ou instale por você mesmo:
 
     $ gem install kamba_checkout
 
-## Usage
+## Configuração
 
-TODO: Write usage instructions here
+```ruby
+require 'kamba_checkout'
 
-## Development
+KambaCheckout.api_key = 'sua-chave-da-api-kamba'
+KambaCheckout.secret_key = 'sua-chave-secreta-kamba'
+```
 
-After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
+Ou simplesmente atribua os valores das suas chaves as seguintes variáveis de ambiente: `ENV["KAMBA_API_KEY"]` e `ENV["KAMBA_SECRET_KEY"]`.
 
-To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and tags, and push the `.gem` file to [rubygems.org](https://rubygems.org).
+Usando Ruby on Rails? Coloque isso em config/initializers em novo arquivo chamado kamba_checkout.rb.
 
-## Contributing
+## Uso
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/kamba_checkout. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [Contributor Covenant](http://contributor-covenant.org) code of conduct.
+```ruby
+checkout_config = {
+            "channel"=>"WEB",
+            "initial_amount"=>10000,
+            "notes"=> "Curso API Iniciantes",
+            "redirect_url_success"=>"https://seusite.com/curso/api-iniciantes"
+      }
+@checkout = KambaCheckout::API.generate_checkout('KAMBA-API-MODE', checkout_config)
+```
+Obs: `KAMBA-API-MODE: sandbox, staging ou production`
 
-## License
 
-The gem is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).
+**Configurações `checkout_config`:**
+- Para o nosso propósito o valor do campo `channel`, permanecerá igual à **WEB** como no exemplo.
+- `initial_amount`, este campo recebe o preço do produto ou serviço a ser comercializado.
+- Substitua o valor do campo `notes` por uma anotação ou descrição geral a cerca do pagamento, e coloque o preço do mesmo no valor do campo `initial_amount`.
+- O campo `redirect_url_success` recebe o endereço da página na qual pretende-se ser redirecionada após o pagamento com sucesso.
 
-## Code of Conduct
+## Usando Ruby on Rails?
 
-Everyone interacting in the KambaCheckout project’s codebases, issue trackers, chat rooms and mailing lists is expected to follow the [code of conduct](https://github.com/[USERNAME]/kamba_checkout/blob/master/CODE_OF_CONDUCT.md).
+Coloque o código acima na action que renderiza a página que vai conter o checkout e siga as instruções:
+
+**Passo 1:**
+## Página do comerciante
+Faça a chamada à biblioteca no cabeçalho da sua página Web ou no corpo da página antes das outras configurações javascript que poderão ser configuradas:
+
+```html
+<head>       
+  <script src="http://comerciante.usekamba.com/checkout/0.0.1/kamba-web-sdk.js" charset="utf-8"></script>
+</head>
+```
+
+**Passo 2:**
+Faça a inclusão do botão "Pagar com KAMBA" dentro do corpo da sua página Web em qualquer lugar onde desejar que o botão seja apresentado.
+
+```html
+<body>
+  <button class="btnOpenWidgetKamba" onclick="start_payment()"></button>
+</body>
+```
+
+**Passo 3:**
+Cole o código abaixo dentro da tag html `<body></body>` no corpo da sua página Web, de preferência no final da página.
+
+```html
+<body>
+   <script type="text/javascript">
+    function start_payment() {
+      kamba(api_config = {
+    	  environment: '<%= @checkout.environment %>', // Use variável de ambiente para segurança.
+    	  api_key: '<%= @checkout.api_key %>', // Use variável de ambiente para segurança.
+        checkout_time: '<%= @checkout.time %>',
+        checkout_signature: '<%= @checkout.signature %>'
+    	},
+    	checkout_config = {
+        channel: '<%= @checkout.channel %>',
+        initial_amount: <%= @checkout.initial_amount %>,
+        notes: '<%= @checkout.notes %>',
+        redirect_url_success: '<%= @checkout.redirect_url_success %>'
+     });
+    }
+  </script>
+  </script>
+</body>

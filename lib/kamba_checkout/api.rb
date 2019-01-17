@@ -1,6 +1,6 @@
 module KambaCheckout
   class API
-    def self.generate_signature(environment, checkout)
+    def self.generate_checkout(environment, checkout)
       time = Time.now.httpdate
       secret_key = KambaCheckout.secret_key
 
@@ -10,7 +10,7 @@ module KambaCheckout
 
       hmac_signature = OpenSSL::HMAC.digest(digest, secret_key, canonical_string)
       signature = Base64.strict_encode64(hmac_signature)
-      KambaCheckout::Response.new(environment, json_string, signature, time)
+      KambaCheckout::Response.new(environment, checkout, signature, time)
     end
 
     private
